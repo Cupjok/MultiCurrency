@@ -5,6 +5,7 @@
 [![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)](https://adoptium.net/)
 [![Platform](https://img.shields.io/badge/Platform-Paper%20%7C%20Purpur-blue?style=flat-square)](https://papermc.io/)
 [![License](https://img.shields.io/github/license/Cupjok/MultiCurrency?style=flat-square)](https://github.com/Cupjok/MultiCurrency/blob/main/LICENSE)
+[![Built with Claude Code](https://img.shields.io/badge/Built%20with-Claude%20Code-D97757?style=flat-square&logo=claude&logoColor=white)](https://claude.ai/)
 
 **Unlimited independent, transaction-safe currencies for Minecraft Paper and Purpur servers.**
 
@@ -286,10 +287,10 @@ multicurrency-api/target/MultiCurrency-API-<version>.jar
 Optional MariaDB integration tests can be enabled with:
 
 ```bash
-MC_TEST_MARIADB_HOST=127.0.0.1 \
-MC_TEST_MARIADB_USER=... \
-MC_TEST_MARIADB_PASSWORD=... \
-MC_TEST_MARIADB_DB=multicurrency_test \
+MC_TEST_MARIADB_HOST=127.0.0.1 \\
+MC_TEST_MARIADB_USER=... \\
+MC_TEST_MARIADB_PASSWORD=... \\
+MC_TEST_MARIADB_DB=multicurrency_test \\
 mvn test
 ```
 
