@@ -1,0 +1,391 @@
+# ---------------------------------------------------------------------------
+# MultiCurrency configuration
+#
+# MultiCurrency adds independent currencies (Coins, Gems, Tokens, ...). It does NOT
+# replace your main economy (e.g. CMI) and does NOT register itself with Vault.
+#
+# When a plugin update adds new settings, they are added to this file automatically on
+# start. Your existing values and your currencies are never changed; the previous file is
+# kept in plugins/MultiCurrency/backups/.
+# ---------------------------------------------------------------------------
+
+# Managed by the plugin. Do not change.
+config-version: 2
+
+# Identifies this server in the transaction ledger. Give every server that shares a
+# MariaDB/MySQL database its own id.
+server-id: "server-1"
+
+storage:
+  # sqlite  - single file in the plugin folder; one server only.
+  # mariadb - MariaDB or MySQL 8+ (InnoDB). Safe for several servers sharing one database.
+  # mysql   - alias of mariadb (the MariaDB driver speaks to MySQL too).
+  # Storage changes require a server restart.
+  type: sqlite
+  # Prefix of every table name. Letters, digits and '_' only.
+  table-prefix: "mc_"
+  sqlite:
+    file: "multicurrency.db"
+  mariadb:
+    host: "127.0.0.1"
+    port: 3306
+    database: "multicurrency"
+    username: "multicurrency"
+    password: "change-me"
+    pool-size: 8
+    # Extra MariaDB Connector/J properties.
+    # MySQL 8 (caching_sha2_password) needs one of these:
+    #   sslMode: verify-full            TLS with a trusted certificate (recommended)
+    #   sslMode: trust                  TLS with a self-signed certificate
+    #   allowPublicKeyRetrieval: true   no TLS; only on a trusted private network
+    properties: {}
+
+# ---------------------------------------------------------------------------
+# PlaceholderAPI (optional). Placeholders:
+#   %multicurrency_balance_<id>%            1,234.50
+#   %multicurrency_balance_formatted_<id>%  the currency's format, e.g. 🪙 1,234.50
+#   %multicurrency_balance_raw_<id>%        1234.50 (plain number, for sorting)
+#   %multicurrency_name_<id>%  %multicurrency_symbol_<id>%
+#   %multicurrency_top_name_<id>_<rank>%  %multicurrency_top_balance_<id>_<rank>%  (rank 1-10)
+#   %multicurrency_top_balance_raw_<id>_<rank>%
+# Values come from a short cache so placeholders never wait for the database. Changes on
+# this server show at once; changes made by another server show within the cache time.
+# ---------------------------------------------------------------------------
+placeholders:
+  balance-cache-seconds: 5
+  top-cache-seconds: 30
+  # Shown until a value has been loaded for the first time.
+  loading: "..."
+  # Shown for a leaderboard rank that nobody holds.
+  top-empty: "-"
+
+# ---------------------------------------------------------------------------
+# Currencies. Add as many as you like; the section key is the stable id.
+# You can also create and edit currencies in game: /currency editor
+#
+#   id (the key)       1-32 of a-z 0-9 _ . Stored in the database - never rename it.
+#   display-name       Name shown to players.
+#   symbol             Symbol used by 'format'.
+#   enabled            false: balances are kept but every change is refused.
+#   decimals           0-8 decimal places. FIXED once the currency has been enabled: changing it
+#                      later disables the currency instead of corrupting balances.
+#   starting-balance   Balance of a new account. Quote decimal values ("10.50").
+#   max-balance        Largest balance an account may hold (optional).
+#   transfer-enabled   Whether players may /cpay this currency to each other. Default false.
+#                      Enforced by the service layer for commands AND the developer API.
+#   format             Placeholders: {symbol} {amount} {name} {id}
+#
+# /currency reload applies changes. If any currency is invalid, the reload is refused and
+# the previous configuration stays active.
+# ---------------------------------------------------------------------------
+currencies:
+  coins:
+    display-name: "Coins"
+    symbol: "🪙"
+    enabled: true
+    decimals: 2
+    starting-balance: "0"
+    max-balance: "1000000000000"
+    transfer-enabled: true
+    format: "{symbol} {amount}"
+
+  gems:
+    display-name: "Gems"
+    symbol: "💎"
+    enabled: true
+    decimals: 0
+    starting-balance: "0"
+    transfer-enabled: false
+    format: "{symbol} {amount}"
+
+  tokens:
+    display-name: "Tokens"
+    symbol: "T"
+    enabled: true
+    decimals: 0
+    starting-balance: "0"
+    transfer-enabled: true
+    format: "{amount} {symbol}"
+
+  event_points:
+    display-name: "Event Points"
+    symbol: "EP"
+    enabled: true
+    decimals: 0
+    starting-balance: "0"
+    transfer-enabled: false
+    format: "{amount} {symbol}"
+
+# ---------------------------------------------------------------------------
+# Messages (MiniMessage). <prefix> inserts 'prefix'.
+# ---------------------------------------------------------------------------
+messages:
+  prefix: "<gold>[Currency]</gold> "
+  "yes": "<green>yes</green>"
+  "no": "<red>no</red>"
+  help: |-
+    <gold>MultiCurrency</gold>
+    <yellow>/cbal [player] [currency]</yellow> <gray>- balances</gray>
+    <yellow>/cpay <player> <currency> <amount></yellow> <gray>- pay a player</gray>
+    <yellow>/currency list</yellow> <gray>- list currencies</gray>
+    <yellow>/currency info <currency></yellow> <gray>- currency details</gray>
+    <yellow>/currency top <currency> [page]</yellow> <gray>- leaderboard</gray>
+    <yellow>/currency history [player] [currency]</yellow> <gray>- recent transactions</gray>
+    <yellow>/currency give|take|set <player> <currency> <amount> [reason]</yellow> <gray>- admin</gray>
+    <yellow>/currency editor</yellow> <gray>- create and edit currencies in game</gray>
+    <yellow>/currency reload</yellow> <gray>- reload currencies and messages</gray>
+  no-permission: "<prefix><red>You do not have permission to do that."
+  players-only: "<prefix><red>Only players can do that."
+  unknown-player: "<prefix><red>Unknown player <white><player></white>."
+  usage:
+    balance: "<prefix><yellow>Usage: /cbal <player> [currency]"
+    pay: "<prefix><yellow>Usage: /cpay <player> <currency> <amount>"
+    give: "<prefix><yellow>Usage: /currency give <player> <currency> <amount> [reason]"
+    take: "<prefix><yellow>Usage: /currency take <player> <currency> <amount> [reason]"
+    set: "<prefix><yellow>Usage: /currency set <player> <currency> <amount> [reason]"
+    info: "<prefix><yellow>Usage: /currency info <currency>"
+    top: "<prefix><yellow>Usage: /currency top <currency> [page]"
+    history: "<prefix><yellow>Usage: /currency history <player> [currency]"
+  balance:
+    header: "<prefix><gray>Balances of <white><player></white>:"
+    line: "  <gray>-</gray> <white><currency></white><gray>:</gray> <green><balance></green>"
+    none: "<prefix><gray>No currencies are enabled."
+  pay:
+    sent: "<prefix><green>You paid <white><player></white> <yellow><amount></yellow>. Balance: <yellow><balance></yellow>."
+    received: "<prefix><green>You received <yellow><amount></yellow> from <white><player></white>. Balance: <yellow><balance></yellow>."
+  admin:
+    give: "<prefix><green>Gave <yellow><amount></yellow> to <white><player></white>. New balance: <yellow><balance></yellow>."
+    take: "<prefix><green>Took <yellow><amount></yellow> from <white><player></white>. New balance: <yellow><balance></yellow>."
+    set: "<prefix><green>Set <white><player></white>'s <currency> to <yellow><balance></yellow>."
+  list:
+    header: "<prefix><gray>Currencies (<count>):"
+    line: "  <gray>-</gray> <white><currency></white> <dark_gray>(<id>)</dark_gray> <gray>symbol</gray> <symbol> <gray>transfer:</gray> <transfer>"
+    line-disabled: "  <gray>-</gray> <dark_gray><strikethrough><currency></strikethrough> (<id>) disabled</dark_gray>"
+  info: |-
+    <prefix><white><currency></white> <dark_gray>(<id>)</dark_gray>
+      <gray>Symbol:</gray> <symbol>   <gray>Enabled:</gray> <enabled>   <gray>Transfer:</gray> <transfer>
+      <gray>Decimals:</gray> <decimals>   <gray>Starting:</gray> <starting>   <gray>Max:</gray> <max>
+      <gray>Scale conflict (disabled):</gray> <conflict>
+  top:
+    header: "<prefix><gray>Top <white><currency></white> - page <page>:"
+    line: "  <gray><rank>.</gray> <white><player></white> <green><balance></green>"
+    empty: "  <gray>No entries."
+  history:
+    header: "<prefix><gray>Recent transactions of <white><player></white>:"
+    line: "  <dark_gray><time></dark_gray> <white><type></white> <yellow><amount></yellow> <gray><direction></gray> <dark_gray>by <actor> <reason></dark_gray>"
+    empty: "  <gray>No transactions."
+  reload:
+    done: "<prefix><green>Reloaded <count> currencies.</green> <red><conflicts></red>"
+    failed: "<prefix><red>Reload failed - the previous configuration stays active. See console."
+    errors: "<prefix><red>Reload refused: <count> error(s) in config.yml. The previous configuration stays active."
+    error-line: "  <gray>-</gray> <red><error>"
+  error:
+    unknown-currency: "<prefix><red>Unknown currency <white><currency></white>."
+    currency-disabled: "<prefix><red>That currency is disabled."
+    invalid-amount: "<prefix><red>Invalid amount. Use a positive number like 10 or 2.50."
+    invalid-precision: "<prefix><red>Too many decimal places (<currency> allows <decimals>)."
+    amount-too-large: "<prefix><red>That amount is too large."
+    insufficient-funds: "<prefix><red>You do not have enough <currency>."
+    balance-limit-exceeded: "<prefix><red>That would exceed the maximum balance of <max>."
+    transfer-disabled: "<prefix><red><currency> cannot be transferred between players."
+    self-transfer: "<prefix><red>You cannot pay yourself."
+    duplicate-transaction: "<prefix><red>That transaction was already processed."
+    invalid-argument: "<prefix><red>Invalid arguments."
+    service-unavailable: "<prefix><red>The currency system is not available right now."
+    storage-error: "<prefix><red>A database error occurred. Nothing was changed."
+    outcome-unknown: "<prefix><red>A database error occurred while saving. Check your balance before retrying."
+
+  # In-game editor (/currency editor). Item names and lore are MiniMessage.
+  # 'unlimited' and 'none' are inserted as plain text: do not use tags in them.
+  editor:
+    unlimited: "unlimited"
+    none: "none"
+    title:
+      main: "<dark_gray>Currencies <gray>(page <page>)"
+      currency: "<dark_gray>Edit: <currency>"
+      decimals: "<dark_gray>Decimal places: <id>"
+      confirm: "<dark_gray>Confirm change"
+      delete: "<dark_red>Delete <id>?"
+    items:
+      currency:
+        name: "<gold><currency> <dark_gray>(<id>)"
+        lore: |-
+          <gray>Symbol: <white><symbol>
+          <gray>Example: <white><example>
+          <gray>Decimals: <white><decimals>
+          <gray>Starting balance: <white><starting>
+          <gray>Maximum balance: <white><max>
+          <gray>Transfer: <transfer>  <gray>Enabled: <enabled>
+          <gray>Scale conflict: <conflict>
+
+          <yellow>Click to edit
+      previous:
+        name: "<yellow>Previous page"
+      next:
+        name: "<yellow>Next page"
+      reload:
+        name: "<aqua>Reload config.yml"
+        lore: "<gray>Applies manual changes to config.yml."
+      create:
+        name: "<green>Create currency"
+        lore: |-
+          <gray>You choose the id and decimal places.
+          <gray>New currencies start <white>disabled</white><gray>.
+      close:
+        name: "<red>Close"
+      back:
+        name: "<yellow>Back"
+      display-name:
+        name: "<gold>Display name"
+        lore: |-
+          <gray>Now: <white><currency>
+
+          <yellow>Click to change
+      symbol:
+        name: "<gold>Symbol"
+        lore: |-
+          <gray>Now: <white><symbol>
+
+          <yellow>Click to change
+      format:
+        name: "<gold>Format"
+        lore: |-
+          <gray>Now: <white><format>
+          <gray>Example: <white><example>
+
+          <yellow>Click to change
+      decimals-checking:
+        name: "<gold>Decimal places: <white><decimals>"
+        lore: "<gray>Checking stored data..."
+      decimals-open:
+        name: "<gold>Decimal places: <white><decimals>"
+        lore: |-
+          <gray>Not locked yet: this currency was never enabled.
+          <gray>It locks for good when you enable it.
+
+          <yellow>Click to change
+      decimals-locked:
+        name: "<gold>Decimal places: <white><decimals> <red>(locked)"
+        lore: |-
+          <gray>Balances are stored with <white><stored></white> <gray>decimal places.
+          <gray>Changing them would multiply or divide every balance,
+          <gray>so they can no longer be changed.
+      decimals-conflict:
+        name: "<red>Decimal places: <white><decimals> <red>(conflict)"
+        lore: |-
+          <gray>Balances are stored with <white><stored></white> <gray>decimal places,
+          <gray>but the config says <white><decimals></white><gray>. The currency is disabled.
+
+          <yellow>Click to set it back to <white><stored>
+      starting:
+        name: "<gold>Starting balance"
+        lore: |-
+          <gray>Now: <white><starting>
+          <gray>Balance of a new account.
+
+          <yellow>Click to change
+      max:
+        name: "<gold>Maximum balance"
+        lore: |-
+          <gray>Now: <white><max>
+
+          <yellow>Click to change
+      transfer:
+        name: "<gold>Player transfers: <transfer>"
+        lore: |-
+          <gray>Whether players may /cpay this currency.
+
+          <yellow>Click to switch
+      enabled:
+        name: "<gold>Enabled: <enabled>"
+        lore: |-
+          <gray>Disabled currencies keep their balances
+          <gray>but refuse every change.
+
+          <yellow>Click to switch
+      delete:
+        name: "<red>Delete currency"
+        lore: |-
+          <gray>Removes it from config.yml.
+          <gray>Accounts: <white><accounts></white> <gray>(kept in the database)
+
+          <red>Click, then confirm
+      decimal-option:
+        name: "<white><value> decimal places"
+        lore: "<gray>Smallest amount: <white><smallest>"
+      decimal-current:
+        name: "<green><value> decimal places (current)"
+        lore: "<gray>Smallest amount: <white><smallest>"
+      decimal-locked:
+        name: "<dark_gray><value> decimal places"
+        lore: "<gray>Not possible: stored balances use another scale."
+      confirm:
+        name: "<green><bold>Confirm"
+      delete-confirm:
+        name: "<red><bold>Delete permanently from config"
+      cancel:
+        name: "<gray>Cancel"
+      info:
+        name: "<yellow>What will happen"
+    confirm:
+      starting: |-
+        <gray>Starting balance of <white><id></white><gray>:
+        <white><old></white> <gray>-></gray> <yellow><new></yellow>
+        <gray>Every new account starts with this amount.
+        <gray>Existing balances do not change.
+      max: |-
+        <gray>Maximum balance of <white><id></white><gray>:
+        <white><old></white> <gray>-></gray> <yellow><new></yellow>
+        <gray>Lowering it never removes existing money;
+        <gray>it only refuses deposits above the limit.
+      transfer-on: |-
+        <yellow>Players will be able to /cpay <white><currency></white><yellow>.
+        <gray>Payments cannot be undone automatically.
+      transfer-off: "<gray>Players will no longer be able to /cpay <white><currency></white><gray>."
+      enable: "<gray>Enable <white><currency></white><gray> again. Balances are kept."
+      enable-lock: |-
+        <yellow>Enable <white><currency></white><yellow>.
+        <red>Its decimal places (<white><decimals></white><red>) lock for good
+        <red>once it is enabled. Check them first.
+      disable: |-
+        <gray>Disable <white><currency></white><gray>.
+        <gray>Balances are kept but every change is refused,
+        <gray>including purchases by other plugins.
+      delete: |-
+        <red>Delete <white><currency></white> <red>(<id>) from config.yml.
+        <gray>Accounts: <white><accounts></white>  <gray>Total supply: <white><supply>
+        <gray>Ledger entries: <white><ledger>
+        <gray>Balances and history stay in the database.
+        <gray>Creating the id <white><id></white> <gray>again restores them.
+        <gray>Plugins that use this currency will fail until then.
+    prompt:
+      display-name: "<prefix><yellow>Type the new display name of <white><id></white> in chat (1-32 characters). Now: <white><current>"
+      symbol: "<prefix><yellow>Type the new symbol of <white><id></white> in chat (up to 16 characters, <white>none</white> for no symbol). Now: <white><current>"
+      format: "<prefix><yellow>Type the new format of <white><id></white> in chat. Use <white>{amount}</white>, optionally <white>{symbol} {name} {id}</white>. Now: <white><current>"
+      starting-balance: "<prefix><yellow>Type the new starting balance of <white><id></white> in chat, e.g. 0 or 10.50. Now: <white><current>"
+      max-balance: "<prefix><yellow>Type the new maximum balance of <white><id></white> in chat, or <white>none</white> for no limit. Now: <white><current>"
+      id: "<prefix><yellow>Type the id of the new currency in chat: 1-32 of <white>a-z 0-9 _</white>. It can never be renamed."
+      hint: "<prefix><gray>Type <white>cancel</white> to abort. The question expires in <seconds> seconds."
+      cancelled: "<prefix><gray>Cancelled. Nothing was changed."
+    invalid:
+      id: "<prefix><red>Invalid id <white><value></white>. Use 1-32 of a-z, 0-9 and _."
+      exists: "<prefix><red>A currency with the id <white><value></white> already exists."
+      missing: "<prefix><red>The currency <white><value></white> no longer exists."
+      decimals: "<prefix><red>Decimal places must be between 0 and 8."
+      value: "<prefix><red>Invalid value."
+      name: "<prefix><red>The display name must be 1-32 characters."
+      symbol: "<prefix><red>The symbol must be up to 16 characters."
+      format: "<prefix><red>The format must be up to 64 characters and contain {amount}."
+      amount: "<prefix><red>Invalid amount <white><value></white>. Use a plain number like 10 or 2.50."
+      characters: "<prefix><red>Not allowed: formatting tags, colour codes (& or §) and invisible characters."
+      config: "<prefix><red>Not saved, the change would make config.yml invalid: <white><error>"
+    missing: "<prefix><red>The currency <white><id></white> no longer exists."
+    conflict: "<prefix><red><white><id></white> has a decimal-places conflict. Fix the decimal places first."
+    loading: "<prefix><gray>Still loading stored data, try again in a moment."
+    decimals-locked: "<prefix><red>The decimal places of <white><id></white> are locked at <white><decimals></white> because balances were stored with them."
+    archived: "<prefix><yellow>Stored data for <white><id></white> exists: <white><accounts></white> accounts, total <white><supply></white>. Decimal places are fixed at <white><decimals></white>; the balances return when it is enabled."
+    created: "<prefix><green>Created <white><id></white>. It is disabled until you enable it."
+    deleted: "<prefix><green>Deleted <white><id></white> from config.yml. Its balances stay in the database."
+    saved: "<prefix><green>Saved: <gray><change>"
+    changed-on-disk: "<prefix><red>config.yml was changed on disk and not reloaded yet. Run <white>/currency reload</white> first so those changes are not lost or applied by accident."
+    save-failed: "<prefix><red>Could not write config.yml. Nothing was changed. See console."

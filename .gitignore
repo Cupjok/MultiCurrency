@@ -1,0 +1,34 @@
+# Build output
+target/
+dependency-reduced-pom.xml
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local runtime data / secrets
+*.db
+*.db-wal
+*.db-shm
+*.log
+.env
+.env.*
+run/
+server/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# AI agent instructions: local only, never commit
+CLAUDE.md
+AGENTS.md
+HANDOFF.md
+PROGRESS.md

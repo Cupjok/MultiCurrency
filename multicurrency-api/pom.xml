@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>me.cupjok.multicurrency</groupId>
+        <artifactId>multicurrency-parent</artifactId>
+        <version>1.1.0</version>
+    </parent>
+
+    <artifactId>multicurrency-api</artifactId>
+    <packaging>jar</packaging>
+    <name>MultiCurrency API</name>
+    <description>Public, platform-independent API of the MultiCurrency plugin. Depend on this (provided scope).</description>
+
+    <build>
+        <finalName>MultiCurrency-API-${project.version}</finalName>
+    </build>
+</project>

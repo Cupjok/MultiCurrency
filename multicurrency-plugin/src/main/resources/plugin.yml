@@ -1,0 +1,92 @@
+name: MultiCurrency
+version: '${project.version}'
+main: me.cupjok.multicurrency.bukkit.MultiCurrencyPlugin
+api-version: '26.2'
+description: Unlimited independent, transaction-safe currencies. Coexists with the primary economy (e.g. CMI); does not register with Vault.
+author: cupjok
+load: POSTWORLD
+softdepend: [ PlaceholderAPI ]
+
+# Downloaded from Maven Central by the server on first start (keep in sync with the pom).
+libraries:
+  - com.zaxxer:HikariCP:${hikari.version}
+  - org.xerial:sqlite-jdbc:${sqlite.version}
+  - org.mariadb.jdbc:mariadb-java-client:${mariadb.version}
+
+commands:
+  currency:
+    description: MultiCurrency main command.
+    usage: /currency <balance|pay|list|info|top|history|give|take|set|reload|editor>
+    aliases: [ currencies, mcur ]
+  cbal:
+    description: Show your MultiCurrency balances.
+    usage: /cbal [player] [currency]
+    permission: multicurrency.command.balance
+  cpay:
+    description: Pay another player in a transferable currency.
+    usage: /cpay <player> <currency> <amount>
+    permission: multicurrency.command.pay
+
+permissions:
+  multicurrency.command.balance:
+    description: View your own balances.
+    default: true
+  multicurrency.command.balance.others:
+    description: View other players' balances.
+    default: op
+  multicurrency.command.pay:
+    description: Pay other players (only currencies with transfer-enabled true).
+    default: true
+  multicurrency.command.list:
+    description: List currencies.
+    default: true
+  multicurrency.command.info:
+    description: Show details of a currency.
+    default: true
+  multicurrency.command.top:
+    description: View balance leaderboards.
+    default: true
+  multicurrency.command.history:
+    description: View your own transaction history.
+    default: true
+  multicurrency.command.history.others:
+    description: View other players' transaction history.
+    default: op
+  multicurrency.admin.give:
+    description: Add currency to a player's balance.
+    default: op
+  multicurrency.admin.take:
+    description: Remove currency from a player's balance.
+    default: op
+  multicurrency.admin.set:
+    description: Set a player's balance.
+    default: op
+  multicurrency.admin.reload:
+    description: Reload currencies and messages.
+    default: op
+  multicurrency.admin.editor:
+    description: Open the in-game currency editor and change display name, symbol and format.
+    default: op
+  multicurrency.admin.editor.economy:
+    description: Change enabled, transfer-enabled, decimals, starting and maximum balance in the editor.
+    default: op
+  multicurrency.admin.editor.create:
+    description: Create currencies in the editor.
+    default: op
+  multicurrency.admin.editor.delete:
+    description: Delete currencies in the editor (balances stay in the database).
+    default: op
+  multicurrency.admin:
+    description: All administrative permissions.
+    default: op
+    children:
+      multicurrency.admin.give: true
+      multicurrency.admin.take: true
+      multicurrency.admin.set: true
+      multicurrency.admin.reload: true
+      multicurrency.admin.editor: true
+      multicurrency.admin.editor.economy: true
+      multicurrency.admin.editor.create: true
+      multicurrency.admin.editor.delete: true
+      multicurrency.command.balance.others: true
+      multicurrency.command.history.others: true
